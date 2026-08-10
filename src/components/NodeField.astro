@@ -1,0 +1,239 @@
+---
+/**
+ * Interactive node-network background for the hero.
+ *
+ * Reference: darkwolf.io scatters glowing branded shapes that respond as the
+ * cursor passes over them. Their mark is a paw print — ours is a node graph,
+ * which carries meaning here: nodes and edges read as an attack surface.
+ *
+ * Restraint is deliberate. This is a slow drift plus a proximity response, not
+ * a particle toy: no trails, no mouse-repel physics, no matrix rain.
+ *
+ * Behaviour:
+ *   - nodes drift slowly and wrap at the edges
+ *   - edges are drawn between nodes within a threshold, opacity by distance
+ *   - nodes near the cursor brighten and link to it
+ *   - honours prefers-reduced-motion: renders one static frame, no animation
+ *   - pauses when the tab is hidden or the hero is scrolled out of view
+ *   - pointer-events: none, so it never intercepts clicks
+ */
+---
+
+<canvas class="nodefield" aria-hidden="true" data-nodefield></canvas>
+
+<style>
+  .nodefield {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    pointer-events: none;
+    /* Fades out toward the text so the headline always wins on contrast. */
+    mask-image: linear-gradient(100deg, transparent 0%, transparent 28%, #000 62%);
+    -webkit-mask-image: linear-gradient(100deg, transparent 0%, transparent 28%, #000 62%);
+  }
+</style>
+
+<script>
+  const target = document.querySelector<HTMLCanvasElement>('[data-nodefield]');
+  if (target) initNodeField(target);
+
+  // Takes the canvas as a non-nullable parameter: narrowing from an `if` does
+  // not reach into hoisted function declarations, which could be called later.
+  function initNodeField(canvas: HTMLCanvasElement) {
+    const ctx = canvas.getContext('2d', { alpha: true });
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // Palette pulled from the CSS custom properties so the canvas can never
+    // drift out of sync with the design tokens.
+    const styles = getComputedStyle(document.documentElement);
+    const accent = styles.getPropertyValue('--accent').trim() || '#ff3b47';
+    const dim = styles.getPropertyValue('--text-dim').trim() || '#5a606e';
+
+    interface Node {
+      x: number;
+      y: number;
+      vx: number;
+      vy: number;
+      r: number;
+    }
+
+    const LINK_DIST = 132;
+    const CURSOR_DIST = 190;
+
+    let nodes: Node[] = [];
+    let width = 0;
+    let height = 0;
+    let dpr = 1;
+    let raf = 0;
+    let visible = true;
+    const pointer = { x: -9999, y: -9999, active: false };
+
+    /** Node count scales with area, capped so a wide monitor stays cheap. */
+    function targetCount(): number {
+      const area = width * height;
+      return Math.max(18, Math.min(70, Math.round(area / 17000)));
+    }
+
+    function seed(): void {
+      nodes = Array.from({ length: targetCount() }, () => ({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        // Slow drift: a full traverse takes the better part of a minute.
+        vx: (Math.random() - 0.5) * 0.22,
+        vy: (Math.random() - 0.5) * 0.22,
+        r: 1 + Math.random() * 1.4,
+      }));
+    }
+
+    function resize(): void {
+      const rect = canvas.getBoundingClientRect();
+      width = rect.width;
+      height = rect.height;
+      // Cap DPR at 2: beyond that the cost is real and the gain invisible.
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.round(width * dpr);
+      canvas.height = Math.round(height * dpr);
+      ctx?.setTransform(dpr, 0, 0, dpr, 0, 0);
+      seed();
+    }
+
+    function hexToRgb(hex: string): [number, number, number] {
+      const clean = hex.replace('#', '');
+      const full = clean.length === 3 ? clean.replace(/./g, (c) => c + c) : clean;
+      const n = parseInt(full, 16);
+      return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+    }
+
+    const [ar, ag, ab] = hexToRgb(accent);
+    const [dr, dg, db] = hexToRgb(dim);
+
+    function draw(): void {
+      if (!ctx) return;
+      ctx.clearRect(0, 0, width, height);
+
+      // Edges first so nodes sit on top of their own connections.
+      for (let i = 0; i < nodes.length; i++) {
+        const a = nodes[i]!;
+        for (let j = i + 1; j < nodes.length; j++) {
+          const b = nodes[j]!;
+          const dx = a.x - b.x;
+          const dy = a.y - b.y;
+          const dist = Math.hypot(dx, dy);
+          if (dist > LINK_DIST) continue;
+          const alpha = (1 - dist / LINK_DIST) * 0.5;
+          ctx.strokeStyle = `rgba(${dr}, ${dg}, ${db}, ${alpha})`;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(a.x, a.y);
+          ctx.lineTo(b.x, b.y);
+          ctx.stroke();
+        }
+      }
+
+      for (const n of nodes) {
+        let heat = 0;
+        if (pointer.active) {
+          const dist = Math.hypot(n.x - pointer.x, n.y - pointer.y);
+          if (dist < CURSOR_DIST) {
+            heat = 1 - dist / CURSOR_DIST;
+            // Link the cursor to whatever is near it — the "reaching" read.
+            ctx.strokeStyle = `rgba(${ar}, ${ag}, ${ab}, ${heat * 0.42})`;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(n.x, n.y);
+            ctx.lineTo(pointer.x, pointer.y);
+            ctx.stroke();
+          }
+        }
+
+        // Cold nodes are neutral; hot nodes go crimson and grow slightly.
+        const r = Math.round(dr + (ar - dr) * heat);
+        const g = Math.round(dg + (ag - dg) * heat);
+        const b = Math.round(db + (ab - db) * heat);
+        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${0.55 + heat * 0.45})`;
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, n.r + heat * 1.6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function step(): void {
+      for (const n of nodes) {
+        n.x += n.vx;
+        n.y += n.vy;
+        // Wrap rather than bounce: bouncing makes the edges legible as walls.
+        if (n.x < -10) n.x = width + 10;
+        if (n.x > width + 10) n.x = -10;
+        if (n.y < -10) n.y = height + 10;
+        if (n.y > height + 10) n.y = -10;
+      }
+      draw();
+      raf = requestAnimationFrame(step);
+    }
+
+    function start(): void {
+      if (raf || reduceMotion) return;
+      raf = requestAnimationFrame(step);
+    }
+
+    function stop(): void {
+      if (!raf) return;
+      cancelAnimationFrame(raf);
+      raf = 0;
+    }
+
+    // Pointer position is relative to the canvas box.
+    window.addEventListener(
+      'pointermove',
+      (event) => {
+        if (event.pointerType === 'touch') return;
+        const rect = canvas.getBoundingClientRect();
+        pointer.x = event.clientX - rect.left;
+        pointer.y = event.clientY - rect.top;
+        pointer.active =
+          pointer.x >= 0 && pointer.x <= rect.width && pointer.y >= 0 && pointer.y <= rect.height;
+        // With motion reduced there is no loop running, so redraw once.
+        if (reduceMotion) draw();
+      },
+      { passive: true },
+    );
+
+    window.addEventListener('blur', () => {
+      pointer.active = false;
+    });
+
+    let resizeTimer = 0;
+    window.addEventListener('resize', () => {
+      window.clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(() => {
+        resize();
+        draw();
+      }, 150);
+    });
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) stop();
+      else if (visible) start();
+    });
+
+    // Don't burn frames animating a hero nobody is looking at.
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            visible = entry.isIntersecting;
+            if (visible && !document.hidden) start();
+            else stop();
+          }
+        },
+        { threshold: 0 },
+      ).observe(canvas);
+    }
+
+    resize();
+    draw();
+    if (!reduceMotion) start();
+  }
+</script>

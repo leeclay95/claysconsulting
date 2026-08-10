@@ -1,0 +1,30 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "claysconsulting-site",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-08-01",
+
+  // The account ID is deliberately NOT committed. Wrangler reads it from the
+  // CLOUDFLARE_ACCOUNT_ID environment variable — supplied in CI from the
+  // repository secret, and exported locally when deploying by hand.
+
+  // M1: reachable at https://claysconsulting-site.<subdomain>.workers.dev
+  // M2/M3 add a "routes" entry here. Deliberately NOT `custom_domain: true` —
+  // that makes wrangler manage the DNS record, which would force DNS:Edit onto
+  // the CI token and collapse the split in the design doc (§10).
+  "workers_dev": true,
+
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page",
+    // Everything except /api/* is served straight from static assets, never
+    // touching the Worker. Keeps the site fast and the handler narrow.
+    "run_worker_first": ["/api/*"]
+  },
+
+  "observability": {
+    "enabled": true
+  }
+}

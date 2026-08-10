@@ -1,0 +1,160 @@
+# Name of the workflow as it appears in the GitHub Actions UI
+name: Deploy to Cloudflare
+
+# Define when this workflow should run
+on:
+  # Automatically deploy to production when code is pushed to the main branch
+  push:
+    branches:
+      - main
+
+  # On pull requests, run the checks and publish a preview version.
+  # Nothing reaches production from a PR.
+  pull_request:
+    branches:
+      - main
+
+  # Allow manual runs from the GitHub Actions UI
+  workflow_dispatch:
+
+# Never let two deploys race each other to the same Worker.
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+# Least privilege by default; the preview job widens this for itself.
+permissions:
+  contents: read
+
+env:
+  # Astro phones home with anonymous usage data unless told not to.
+  ASTRO_TELEMETRY_DISABLED: '1'
+  # Same for Wrangler.
+  WRANGLER_SEND_METRICS: 'false'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    # Surfaced so the comment job below can post the real preview URL.
+    outputs:
+      preview-url: ${{ steps.preview.outputs.deployment-url }}
+
+    steps:
+      # Step 1: Pull the latest code from the repository
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      # Step 2: Set up Node.js. Astro 7 requires >= 22.12.0.
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      # Step 3: Install dependencies using npm ci
+      # npm ci ensures repeatable, deterministic installs in CI environments
+      - name: Install dependencies
+        run: npm ci
+
+      # ---------------------------------------------------------------------
+      # CHECKS GATE — every step below must pass before any deploy step runs.
+      # This gate is the reason this project uses Actions instead of
+      # Cloudflare's native Git integration, which offers no equivalent.
+      # ---------------------------------------------------------------------
+
+      # Step 4: Generate Worker binding types from wrangler.jsonc.
+      # Needs no Cloudflare credentials — it reads local config only.
+      - name: Generate Worker types
+        run: npx wrangler types
+
+      # Step 5: Template and type errors in .astro files
+      - name: Type check
+        run: npm run check
+
+      # Step 6: Build the website
+      # This should match the build command you run locally
+      - name: Build website
+        run: npm run build
+
+      # Step 7: Every nav anchor must resolve to a section that actually
+      # rendered. Feature flags make this a real failure mode.
+      - name: Verify anchor integrity
+        run: node scripts/check-anchors.mjs dist
+
+      # Step 8: Unit tests for the /api/contact handler. Runs in workerd via
+      # Miniflare with a fake mail sender — no network, no live email sent.
+      - name: Unit tests
+        run: npx vitest run
+
+      # Step 9: Dependency audit. Fails the build on high or critical
+      # advisories rather than warning about them in a log nobody reads.
+      - name: Dependency audit
+        run: npm audit --audit-level=high
+
+      # ---------------------------------------------------------------------
+      # DEPLOY — only after the gate above is green.
+      #
+      # No S3 sync, no cache-header passes, and no CDN invalidation: Wrangler
+      # fingerprints assets, sets their cache headers, and each deploy purges
+      # its own edge cache atomically.
+      # ---------------------------------------------------------------------
+
+      # Step 10: Production deploy, on main pushes and manual runs only.
+      - name: Deploy to production
+        if: github.event_name != 'pull_request'
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy
+
+      # Step 11: On a PR, upload a preview version instead. This creates a
+      # separate preview URL and does not change what production serves.
+      - name: Upload preview version
+        id: preview
+        if: github.event_name == 'pull_request'
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: versions upload
+
+      # Step 12: Final confirmation step
+      # Purely informational, useful for logs and debugging
+      - name: Deployment complete
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "Preview version uploaded; production unchanged."
+          else
+            echo "Deployment successful"
+            echo "claysconsulting.org Worker is live"
+          fi
+
+  # Separate job so that commenting on the PR is the only thing granted
+  # pull-requests: write, and it never runs alongside a production deploy.
+  comment-preview:
+    needs: deploy
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Comment preview URL on the PR
+        uses: actions/github-script@v9
+        env:
+          PREVIEW_URL: ${{ needs.deploy.outputs.preview-url }}
+        with:
+          script: |
+            const url = process.env.PREVIEW_URL;
+            const body = url
+              ? `**Preview version uploaded:** ${url}\n\nProduction is unchanged by this pull request.`
+              : '**Preview version uploaded.** Wrangler returned no URL — see the `Upload preview version` step log.';
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body,
+            });

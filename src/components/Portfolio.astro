@@ -1,0 +1,130 @@
+---
+import { certifications, operator, sectionNumber, site } from '../config';
+
+/**
+ * The personal / portfolio section. No photo, per operator decision — a
+ * monospace identity block instead.
+ *
+ * Certifications render only when supplied; they are never invented here.
+ */
+---
+
+<section id="portfolio" class="section">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="section-head__num">{sectionNumber('portfolio')}</span>
+      <h2>Portfolio</h2>
+    </div>
+
+    <div class="portfolio__grid">
+      <!-- Identity card: monospace and dense, but with no fake prompt or
+           cursor chrome. -->
+      <aside class="portfolio__id">
+        <dl class="portfolio__dl">
+          <div>
+            <dt class="label">Name</dt>
+            <dd>{operator.name}</dd>
+          </div>
+          <div>
+            <dt class="label">Certifications</dt>
+            <dd>
+              {certifications.length > 0 && (
+                <span class="portfolio__certs">{certifications.join(', ')}</span>
+              )}
+              <ul class="portfolio__links">
+                {operator.credly.map((profile) => (
+                  <li>
+                    <a href={profile.href} rel="noopener noreferrer">{profile.label}</a>
+                  </li>
+                ))}
+              </ul>
+            </dd>
+          </div>
+          <div>
+            <dt class="label">GitHub</dt>
+            <dd>
+              <a href={site.github} rel="noopener">
+                {site.github.replace('https://', '')}
+              </a>
+            </dd>
+          </div>
+          <div>
+            <dt class="label">Contact</dt>
+            <dd><a href={`mailto:${site.email}`}>{site.email}</a></dd>
+          </div>
+        </dl>
+      </aside>
+
+      <div class="portfolio__bio">
+        <p>{operator.bio}</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .portfolio__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 22rem) minmax(0, 1fr);
+    gap: 3rem;
+    align-items: start;
+  }
+
+  .portfolio__id {
+    background: var(--bg-raised);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    padding: 1.75rem;
+    font-family: var(--font-mono);
+  }
+
+  .portfolio__dl {
+    margin: 0;
+    display: grid;
+    gap: 1.25rem;
+  }
+
+  .portfolio__dl dt {
+    margin-bottom: 0.3rem;
+  }
+
+  .portfolio__dl dd {
+    margin: 0;
+    color: var(--text);
+    font-size: 0.875rem;
+    line-height: 1.5;
+    /* Long URLs must not widen the card on narrow viewports. */
+    overflow-wrap: anywhere;
+  }
+
+  .portfolio__certs {
+    display: block;
+    margin-bottom: 0.6rem;
+  }
+
+  .portfolio__links {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.4rem;
+  }
+
+  .portfolio__bio {
+    max-width: var(--measure);
+    display: grid;
+    gap: 1rem;
+  }
+
+  .portfolio__bio p {
+    font-size: 1.0625rem;
+    color: var(--text);
+  }
+
+  @media (max-width: 860px) {
+    .portfolio__grid {
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+  }
+</style>

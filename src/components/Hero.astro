@@ -1,0 +1,53 @@
+---
+import { hero, site } from '../config';
+import NodeField from './NodeField.astro';
+---
+
+<section id="top" class="hero">
+  <NodeField />
+
+  <div class="wrap hero__content">
+    <h1 class="hero__h1">{hero.headline}</h1>
+
+    <p class="hero__sub">{site.tagline}</p>
+
+    <div class="hero__ctas">
+      <a class="btn btn--primary" href="#contact">Request an engagement</a>
+      <a class="btn btn--ghost" href="#approach">How we operate</a>
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero {
+    position: relative;
+    padding-block: clamp(4rem, 11vw, 8rem) clamp(4rem, 11vw, 8rem);
+    /* Contain the canvas, which is absolutely positioned to this box. */
+    overflow: hidden;
+  }
+
+  .hero__content {
+    position: relative;
+    /* Above the canvas. */
+    z-index: 1;
+  }
+
+  .hero__h1 {
+    font-size: clamp(2.25rem, 6.5vw, 4.25rem);
+    letter-spacing: -0.03em;
+    max-width: 26ch;
+  }
+
+  .hero__sub {
+    margin-top: 1.75rem;
+    font-size: clamp(1rem, 1.6vw, 1.1875rem);
+    max-width: 54ch;
+  }
+
+  .hero__ctas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 2.5rem;
+  }
+</style>

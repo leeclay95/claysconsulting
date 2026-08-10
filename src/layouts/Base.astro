@@ -1,0 +1,198 @@
+---
+import '../styles/tokens.css';
+import { sections, site } from '../config';
+
+interface Props {
+  title: string;
+  description: string;
+}
+
+const { title, description } = Astro.props;
+const navItems = sections.filter((s) => s.inNav && s.enabled);
+const canonical = new URL(Astro.url.pathname, Astro.site).href;
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#0b0c0f" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  </head>
+
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="hdr">
+      <div class="wrap hdr__inner">
+        <a class="hdr__mark" href="#top">
+          <span class="hdr__mark-name">{site.name}</span>
+        </a>
+
+        <nav class="hdr__nav" aria-label="Sections">
+          {navItems.map((s) => <a href={`#${s.id}`}>{s.label}</a>)}
+        </nav>
+
+        <!-- Two labels, swapped by display:none so only one is ever in the
+             accessibility tree. The long form overflows a 390px viewport. -->
+        <a class="hdr__cta" href="#contact">
+          <span class="hdr__cta-lg">Request engagement</span>
+          <span class="hdr__cta-sm">Contact</span>
+        </a>
+      </div>
+    </header>
+
+    <main id="main">
+      <slot />
+    </main>
+
+    <footer class="ftr">
+      <div class="wrap ftr__inner">
+        <p class="label">
+          &copy; {new Date().getFullYear()} {site.name} &nbsp;·&nbsp; {site.domain}
+        </p>
+        <p class="label">
+          <a href={`mailto:${site.email}`}>{site.email}</a>
+        </p>
+      </div>
+    </footer>
+
+    <style>
+      .hdr {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        height: 4rem;
+        background: color-mix(in srgb, var(--bg) 88%, transparent);
+        backdrop-filter: blur(8px);
+        border-bottom: 1px solid var(--border);
+      }
+
+      .hdr__inner {
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+        height: 100%;
+      }
+
+      .hdr__mark {
+        font-family: var(--font-mono);
+        font-size: 0.8125rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--text);
+        text-decoration: none;
+        white-space: nowrap;
+      }
+
+      /* The one piece of decoration: a crimson marker before the wordmark,
+         standing in for a logo until the operator supplies one. */
+      .hdr__mark-name::before {
+        content: '';
+        display: inline-block;
+        width: 0.5rem;
+        height: 0.5rem;
+        margin-right: 0.6rem;
+        background: var(--accent);
+      }
+
+      .hdr__nav {
+        display: flex;
+        gap: 1.75rem;
+        margin-left: auto;
+        font-family: var(--font-mono);
+        font-size: 0.6875rem;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+
+      .hdr__nav a {
+        color: var(--text-muted);
+        text-decoration: none;
+      }
+
+      .hdr__nav a:hover {
+        color: var(--text);
+      }
+
+      .hdr__cta {
+        font-family: var(--font-mono);
+        font-size: 0.6875rem;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--text);
+        text-decoration: none;
+        border: 1px solid var(--border-strong);
+        border-radius: var(--radius);
+        padding: 0.6rem 0.9rem;
+        white-space: nowrap;
+      }
+
+      .hdr__cta:hover {
+        border-color: var(--accent);
+        color: var(--accent-soft);
+      }
+
+      .hdr__cta-sm {
+        display: none;
+      }
+
+      /* Below 900px the anchor nav collapses; the CTA and wordmark remain.
+         No hamburger menu — seven anchors on one page do not justify the JS. */
+      @media (max-width: 900px) {
+        .hdr__nav {
+          display: none;
+        }
+        .hdr__cta {
+          margin-left: auto;
+        }
+      }
+
+      /* Narrow phones: the full CTA label plus the wordmark exceeds the
+         viewport, which widens the document and clips every section. */
+      @media (max-width: 600px) {
+        .hdr__inner {
+          gap: 0.75rem;
+        }
+        .hdr__cta-lg {
+          display: none;
+        }
+        .hdr__cta-sm {
+          display: inline;
+        }
+        .hdr__mark {
+          font-size: 0.75rem;
+          letter-spacing: 0.06em;
+        }
+      }
+
+      .ftr {
+        border-top: 1px solid var(--border);
+        padding-block: 2.5rem;
+        background: var(--bg-deep);
+      }
+
+      .ftr__inner {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem 2rem;
+        justify-content: space-between;
+      }
+
+      .ftr__inner p {
+        margin: 0;
+      }
+    </style>
+  </body>
+</html>

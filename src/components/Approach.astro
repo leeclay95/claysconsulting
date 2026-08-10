@@ -1,0 +1,151 @@
+---
+import { sectionNumber } from '../config';
+
+/**
+ * The credibility section.
+ *
+ * Naming rules of engagement, authorization memos, and deconfliction explicitly
+ * is what distinguishes an authorized-operations vendor from an individual who
+ * hacks. Per the design doc this section must NOT be trimmed for length.
+ */
+const phases = [
+  {
+    num: '01',
+    title: 'Scope',
+    body:
+      'Written rules of engagement before any traffic is sent. Targets, techniques, timing windows, and explicit exclusions are agreed and signed. An authorization memo names who approved the work and what it covers.',
+    detail: ['Rules of engagement', 'Authorization memo', 'Named points of contact'],
+  },
+  {
+    num: '02',
+    title: 'Execute',
+    body:
+      'Testing runs inside the agreed window with deconfliction contacts live throughout, so your SOC can separate our activity from a real intrusion at any moment. Anything that risks availability is cleared before it runs.',
+    detail: ['Deconfliction channel', 'Activity logging', 'Stop-work conditions honored'],
+  },
+  {
+    num: '03',
+    title: 'Report',
+    body:
+      'Findings are ranked by exploitability and business impact, not by scanner severity. Every finding includes the reproduction steps, the evidence, and a remediation that names the specific change to make.',
+    detail: ['Reproduction steps', 'Evidence package', 'Prioritized remediation'],
+  },
+  {
+    num: '04',
+    title: 'Retest',
+    body:
+      'Remediation is verified against the original finding, and the result is documented so it can be handed to an assessor or auditor without translation.',
+    detail: ['Verification of fixes', 'Closure evidence', 'Assessor-ready documentation'],
+  },
+];
+---
+
+<section id="approach" class="section section--deep">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="section-head__num">{sectionNumber('approach')}</span>
+      <h2>How we operate</h2>
+    </div>
+
+    <p class="approach__intro">
+      Every engagement is authorized, scoped in writing, and deconflicted with your defenders.
+      This is the difference between a security vendor and a liability.
+    </p>
+
+    <ol class="approach">
+      {
+        phases.map((p) => (
+          <li class="approach__step">
+            <div class="approach__marker" aria-hidden="true">
+              <span class="approach__num">{p.num}</span>
+            </div>
+            <div class="approach__body">
+              <h3 class="approach__title">{p.title}</h3>
+              <p>{p.body}</p>
+              <ul class="approach__detail">
+                {p.detail.map((d) => (
+                  <li class="label">{d}</li>
+                ))}
+              </ul>
+            </div>
+          </li>
+        ))
+      }
+    </ol>
+  </div>
+</section>
+
+<style>
+  .approach__intro {
+    max-width: var(--measure);
+    font-size: 1.0625rem;
+    color: var(--text);
+    margin-bottom: 3rem;
+  }
+
+  .approach {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0;
+  }
+
+  .approach__step {
+    display: grid;
+    grid-template-columns: 4rem 1fr;
+    gap: 1.5rem;
+    padding-block: 2rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .approach__step:last-child {
+    border-bottom: 1px solid var(--border);
+  }
+
+  .approach__marker {
+    display: flex;
+    justify-content: flex-start;
+  }
+
+  .approach__num {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    padding: 0.3rem 0.5rem;
+    height: fit-content;
+  }
+
+  .approach__body {
+    max-width: var(--measure);
+  }
+
+  .approach__title {
+    font-size: 1.25rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .approach__detail {
+    list-style: none;
+    margin: 1.25rem 0 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.5rem;
+  }
+
+  .approach__detail li::before {
+    content: '+ ';
+    color: var(--warning);
+  }
+
+  @media (max-width: 640px) {
+    .approach__step {
+      grid-template-columns: 1fr;
+      gap: 0.85rem;
+    }
+  }
+</style>

@@ -1,0 +1,118 @@
+---
+import { projects } from '../data/projects';
+import { sectionNumber } from '../config';
+
+/**
+ * Projects grid, driven entirely by src/data/projects.ts.
+ *
+ * Built but flagged off in src/config.ts: no real projects exist yet, and an
+ * empty grid harms credibility more than an absent section does. Add 2–3
+ * entries, flip `features.projects`, and this renders.
+ */
+const items = projects;
+---
+
+<section id="work" class="section">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="section-head__num">{sectionNumber('work')}</span>
+      <h2>Selected work</h2>
+    </div>
+
+    <div class="work">
+      {
+        items.map((p) => (
+          <article class={`work__card work__card--${p.kind}`}>
+            <header class="work__head">
+              <h3 class="work__title">{p.title}</h3>
+              {p.status === 'in-dev' && <span class="work__badge">In dev</span>}
+            </header>
+            <p class="work__summary">{p.summary}</p>
+            <ul class="work__stack">
+              {p.stack.map((s) => (
+                <li class="label">{s}</li>
+              ))}
+            </ul>
+            {p.href && (
+              <a class="work__link label" href={p.href} rel="noopener">
+                View &rarr;
+              </a>
+            )}
+          </article>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .work {
+    display: grid;
+    gap: 1.25rem;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 21rem), 1fr));
+  }
+
+  .work__card {
+    background: var(--bg-raised);
+    border: 1px solid var(--border-strong);
+    border-left: 2px solid var(--accent-line, var(--border-strong));
+    border-radius: var(--radius);
+    padding: 1.75rem;
+    display: grid;
+    gap: 1rem;
+    align-content: start;
+  }
+
+  .work__card--offensive {
+    --accent-line: var(--accent);
+  }
+
+  .work__card--compliance {
+    --accent-line: var(--warning);
+  }
+
+  .work__card--architecture {
+    --accent-line: var(--border-strong);
+  }
+
+  .work__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .work__title {
+    font-size: 1.0625rem;
+  }
+
+  .work__badge {
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--warning);
+    border: 1px solid var(--warning);
+    border-radius: var(--radius);
+    padding: 0.15rem 0.4rem;
+    white-space: nowrap;
+  }
+
+  .work__summary {
+    font-size: 0.9375rem;
+  }
+
+  .work__stack {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1rem;
+  }
+
+  .work__link {
+    color: var(--accent-soft);
+    text-decoration: none;
+  }
+</style>

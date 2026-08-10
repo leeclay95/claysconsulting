@@ -1,0 +1,242 @@
+---
+import { features, sectionNumber, site } from '../config';
+
+/**
+ * Contact.
+ *
+ * While `features.contactForm` is false the section shows direct email and
+ * phone instead of a form. A form that posts to an unconfigured endpoint would
+ * silently drop leads, which is worse than no form at all.
+ *
+ * The form itself is a real <form> with a real action, so it degrades to a
+ * normal POST if JS is unavailable. No file uploads — an unauthenticated upload
+ * endpoint on a security consultancy's site is an unnecessary liability.
+ */
+---
+
+<section id="contact" class="section section--deep">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="section-head__num">{sectionNumber('contact')}</span>
+      <h2>Request an engagement</h2>
+    </div>
+
+    <div class="contact__grid">
+      <div class="contact__main">
+        {
+          features.contactForm ? (
+            <form class="cform" id="contact-form" method="POST" action="/api/contact">
+              <div class="cform__row">
+                <label class="cform__field">
+                  <span class="label">Name</span>
+                  <input type="text" name="name" required autocomplete="name" maxlength="120" />
+                </label>
+                <label class="cform__field">
+                  <span class="label">Work email</span>
+                  <input type="email" name="email" required autocomplete="email" maxlength="200" />
+                </label>
+              </div>
+
+              <label class="cform__field">
+                <span class="label">Organization</span>
+                <input type="text" name="organization" required autocomplete="organization" maxlength="160" />
+              </label>
+
+              <label class="cform__field">
+                <span class="label">Scope &amp; timeline</span>
+                <textarea name="message" rows="6" required maxlength="4000"></textarea>
+              </label>
+
+              {/* Honeypot — hidden from users, attractive to naive bots.
+                  Hidden via CSS rather than type=hidden so it looks real. */}
+              <div class="cform__hp" aria-hidden="true">
+                <label>
+                  Website
+                  <input type="text" name="website" tabindex="-1" autocomplete="off" />
+                </label>
+              </div>
+
+              {/* Minimum time-to-submit check: the Worker rejects submissions
+                  that arrive implausibly fast after render. */}
+              <input type="hidden" name="rendered_at" id="rendered-at" value="" />
+
+              {/* Turnstile widget mounts here once a sitekey is configured.
+                  Verification is server-side in the Worker — a client-only
+                  check is theater. */}
+              <div class="cf-turnstile" data-sitekey="" data-theme="dark"></div>
+
+              <button class="btn btn--primary" type="submit">Send request</button>
+
+              <p class="cform__status" id="cform-status" role="status" aria-live="polite"></p>
+            </form>
+          ) : (
+            <div class="contact__direct">
+              <p class="contact__lede">
+                Send scope and timeline directly and you&rsquo;ll get a reply from a
+                practitioner, not a sales desk.
+              </p>
+              <a class="btn btn--primary" href={`mailto:${site.email}`}>
+                {site.email}
+              </a>
+              <p class="contact__note label">
+                Web form pending mail-provider configuration
+              </p>
+            </div>
+          )
+        }
+      </div>
+
+      <aside class="contact__aside">
+        <dl class="contact__dl">
+          <div>
+            <dt class="label">Email</dt>
+            <dd><a href={`mailto:${site.email}`}>{site.email}</a></dd>
+          </div>
+          <div>
+            <dt class="label">Phone</dt>
+            <dd><a href={site.phoneHref}>{site.phone}</a></dd>
+          </div>
+          <div>
+            <dt class="label">Hours</dt>
+            <dd>{site.hours}</dd>
+          </div>
+        </dl>
+
+        <p class="contact__legal">
+          Engagements begin with written authorization. We do not test systems you
+          do not own or have documented permission to assess.
+        </p>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<style>
+  .contact__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 20rem);
+    gap: 3rem;
+    align-items: start;
+  }
+
+  .contact__lede {
+    font-size: 1.0625rem;
+    color: var(--text);
+    max-width: 44ch;
+    margin-bottom: 1.75rem;
+  }
+
+  .contact__direct .btn {
+    text-transform: none;
+    letter-spacing: 0.04em;
+    font-size: 0.875rem;
+  }
+
+  .contact__note {
+    margin-top: 1.25rem;
+    color: var(--warning);
+  }
+
+  .cform {
+    display: grid;
+    gap: 1.25rem;
+    max-width: 40rem;
+  }
+
+  .cform__row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+  }
+
+  .cform__field {
+    display: grid;
+    gap: 0.5rem;
+  }
+
+  .cform input[type='text'],
+  .cform input[type='email'],
+  .cform textarea {
+    font-family: var(--font-sans);
+    font-size: 0.9375rem;
+    color: var(--text);
+    background: var(--bg-raised);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    padding: 0.7rem 0.85rem;
+    width: 100%;
+    resize: vertical;
+  }
+
+  .cform input:focus,
+  .cform textarea:focus {
+    border-color: var(--accent);
+  }
+
+  .cform__hp {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+
+  .cform__status:empty {
+    display: none;
+  }
+
+  .cform__status {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    margin: 0;
+  }
+
+  .cform__status[data-state='error'] {
+    color: var(--accent-soft);
+  }
+
+  .cform__status[data-state='ok'] {
+    color: var(--warning);
+  }
+
+  .contact__aside {
+    background: var(--bg-raised);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    padding: 1.75rem;
+  }
+
+  .contact__dl {
+    margin: 0 0 1.5rem;
+    display: grid;
+    gap: 1.25rem;
+    font-family: var(--font-mono);
+  }
+
+  .contact__dl dt {
+    margin-bottom: 0.3rem;
+  }
+
+  .contact__dl dd {
+    margin: 0;
+    color: var(--text);
+    font-size: 0.875rem;
+  }
+
+  .contact__legal {
+    font-size: 0.8125rem;
+    color: var(--text-dim);
+    border-top: 1px solid var(--border);
+    padding-top: 1.25rem;
+  }
+
+  @media (max-width: 860px) {
+    .contact__grid {
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+    .cform__row {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

@@ -1,0 +1,137 @@
+---
+import { sectionNumber } from '../config';
+
+/**
+ * The three service lines actually offered today, carried across from
+ * the live WordPress site. Each is color-coded by the semantic accent it maps
+ * to: crimson = offensive, amber = compliance, neutral = architecture.
+ */
+const services = [
+  {
+    key: 'offensive',
+    title: 'Offensive Security',
+    summary:
+      'Adversary-emulation testing against networks, applications, and people — run under written authorization with findings mapped to real business impact.',
+    items: [
+      'Network and infrastructure penetration testing',
+      'Web and API application assessment',
+      'Social engineering and phishing simulation',
+      'Red team operations and adversary emulation',
+    ],
+  },
+  {
+    key: 'compliance',
+    title: 'RMF & Compliance Automation',
+    summary:
+      'Authorization packages and continuous-monitoring evidence produced as automated, repeatable pipelines rather than hand-assembled spreadsheets.',
+    items: [
+      'RMF package development and ATO support',
+      'NIST 800-53 / 800-171 control implementation',
+      'Continuous monitoring and evidence automation',
+      'POA&M development and remediation tracking',
+    ],
+  },
+  {
+    key: 'architecture',
+    title: 'Security Architecture',
+    summary:
+      'Designing and reviewing systems so the findings a pentest would raise never get built in the first place.',
+    items: [
+      'Zero-trust and segmentation design',
+      'Cloud security architecture review',
+      'Detection engineering and logging strategy',
+      'Secure SDLC and pipeline hardening',
+    ],
+  },
+];
+---
+
+<section id="services" class="section">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="section-head__num">{sectionNumber('services')}</span>
+      <h2>Services</h2>
+    </div>
+
+    <div class="svc">
+      {
+        services.map((s) => (
+          <article class={`svc__card svc__card--${s.key}`}>
+            <h3 class="svc__title">{s.title}</h3>
+            <p class="svc__summary">{s.summary}</p>
+            <ul class="svc__list">
+              {s.items.map((i) => (
+                <li>{i}</li>
+              ))}
+            </ul>
+          </article>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .svc {
+    display: grid;
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+  }
+
+  .svc__card {
+    background: var(--bg-raised);
+    padding: 2rem 1.75rem;
+    /* The semantic accent reads as a top rule on each card. */
+    border-top: 2px solid var(--accent-line, var(--border-strong));
+  }
+
+  .svc__card--offensive {
+    --accent-line: var(--accent);
+  }
+
+  .svc__card--compliance {
+    --accent-line: var(--warning);
+  }
+
+  .svc__card--architecture {
+    --accent-line: var(--border-strong);
+  }
+
+  .svc__title {
+    font-size: 1.125rem;
+    margin-bottom: 0.85rem;
+  }
+
+  .svc__summary {
+    font-size: 0.9375rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .svc__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.6rem;
+    font-size: 0.875rem;
+  }
+
+  .svc__list li {
+    padding-left: 1rem;
+    position: relative;
+    color: var(--text-muted);
+  }
+
+  .svc__list li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.6em;
+    width: 4px;
+    height: 1px;
+    background: var(--accent-line, var(--border-strong));
+  }
+</style>

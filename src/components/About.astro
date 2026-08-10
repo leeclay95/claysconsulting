@@ -1,0 +1,30 @@
+---
+import { about, sectionNumber } from '../config';
+---
+
+<section id="about" class="section section--deep">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="section-head__num">{sectionNumber('about')}</span>
+      <h2>About</h2>
+    </div>
+
+    <div class="about">
+      {about.map((paragraph) => <p>{paragraph}</p>)}
+    </div>
+  </div>
+</section>
+
+<style>
+  .about {
+    display: grid;
+    gap: 1.5rem;
+    max-width: var(--measure);
+  }
+
+  /* Lead paragraph carries slightly more weight than the follow-on. */
+  .about p:first-child {
+    font-size: 1.0625rem;
+    color: var(--text);
+  }
+</style>
