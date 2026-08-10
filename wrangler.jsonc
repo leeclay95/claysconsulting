@@ -11,10 +11,28 @@
   // Reachable at https://claysconsulting.<subdomain>.workers.dev until routes are
   // added for the apex domain. Worker names allow only lowercase letters,
   // digits and hyphens — no dots — so this cannot be "claysconsulting.org".
-  // M2/M3 add a "routes" entry here. Deliberately NOT `custom_domain: true` —
-  // that makes wrangler manage the DNS record, which would force DNS:Edit onto
-  // the CI token and collapse the split in the design doc (§10).
+  // Kept enabled through the cutover so the site can be compared at both
+  // hostnames. Set to false once the apex is verified: otherwise the site is
+  // reachable at a second hostname that bypasses this zone's WAF and rate
+  // limiting, and search engines see duplicate content.
   "workers_dev": true,
+
+  // Serve the apex and www from this Worker.
+  //
+  // Both hostnames are already proxied through Cloudflare, so a route
+  // intercepts the request at the edge and the origin is never contacted. No
+  // DNS record is created or modified — the existing WordPress A record stays
+  // in place as a live fallback, and removing these routes restores WordPress
+  // immediately.
+  //
+  // `zone_name` rather than `zone_id` so no account identifiers are committed.
+  //
+  // Deliberately NOT `custom_domain: true`: that makes Wrangler create and
+  // manage the DNS record, which would force DNS:Edit onto the CI token.
+  "routes": [
+    { "pattern": "claysconsulting.org/*", "zone_name": "claysconsulting.org" },
+    { "pattern": "www.claysconsulting.org/*", "zone_name": "claysconsulting.org" }
+  ],
 
   "assets": {
     "directory": "./dist",
