@@ -8,19 +8,23 @@
   // CLOUDFLARE_ACCOUNT_ID environment variable — supplied in CI from the
   // repository secret, and exported locally when deploying by hand.
 
-  // Reachable at https://claysconsulting.<subdomain>.workers.dev until routes are
-  // added for the apex domain. Worker names allow only lowercase letters,
-  // digits and hyphens — no dots — so this cannot be "claysconsulting.org".
-  // Disabled now that the apex is verified. A stable <name>.workers.dev
-  // hostname is a permanent second entrance that bypasses this zone's WAF and
-  // rate limiting, and it is duplicate content for search engines.
+  // The site is reachable ONLY through claysconsulting.org. Both of these must
+  // stay false, because either one publishes a *.workers.dev hostname that
+  // serves the full site and /api/* while bypassing this zone's WAF and rate
+  // limiting — and is duplicate content for search engines.
+  //
+  //   workers_dev  -> claysconsulting.<subdomain>.workers.dev        (stable)
+  //   preview_urls -> <version>-claysconsulting.<subdomain>.workers.dev
+  //
+  // Worker names allow only lowercase letters, digits and hyphens (no dots),
+  // which is why the Worker is "claysconsulting" and not "claysconsulting.org".
   "workers_dev": false,
 
-  // Version preview URLs (<version>-<name>.<subdomain>.workers.dev) stay on:
-  // this is a separate setting from workers_dev, and the pull-request workflow
-  // publishes a preview version and comments its URL. These change every
-  // version rather than being a stable, guessable entrance.
-  "preview_urls": true,
+  // Turning this off also removes the preview URL that the pull-request
+  // workflow comments. `wrangler versions upload` still succeeds and the
+  // comment step falls back to pointing at the workflow log. Set to true if
+  // reviewable preview URLs become more valuable than a single entrance.
+  "preview_urls": false,
 
   // Serve the apex and www from this Worker.
   //
