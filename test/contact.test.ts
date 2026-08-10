@@ -134,6 +134,28 @@ describe('handleContact', () => {
     expect(sent).toHaveLength(0);
   });
 
+  it('honors rendered_at sent as a JSON number, not only a string', async () => {
+    const { sender, sent } = fakeSender();
+    // A number would previously be dropped, silently skipping the timing check.
+    const fields = { ...validFields(), rendered_at: Date.now() };
+    const res = await handleContact(post(fields), config, sender, accept);
+
+    expect(res.status).toBe(422);
+    expect(res.body.error).toBe('too_fast');
+    expect(sent).toHaveLength(0);
+  });
+
+  it('ignores object and array field values', async () => {
+    const { sender, sent } = fakeSender();
+    const fields = { ...validFields(), name: { evil: true } };
+    const res = await handleContact(post(fields), config, sender, accept);
+
+    // name becomes absent rather than "[object Object]".
+    expect(res.status).toBe(422);
+    expect(res.body.error).toBe('missing_fields');
+    expect(sent).toHaveLength(0);
+  });
+
   it('rejects an oversized payload before reading it', async () => {
     const { sender, sent } = fakeSender();
     const res = await handleContact(

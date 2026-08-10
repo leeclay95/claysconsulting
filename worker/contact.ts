@@ -53,7 +53,12 @@ async function readFields(request: Request): Promise<Record<string, string> | nu
       if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return null;
       const out: Record<string, string> = {};
       for (const [k, v] of Object.entries(raw)) {
+        // Coerce numbers and booleans: a client that sends rendered_at as a
+        // JSON number would otherwise have it silently dropped, skipping the
+        // minimum time-to-submit check. Objects and arrays are still ignored.
         if (typeof v === 'string') out[k] = v;
+        else if (typeof v === 'number' && Number.isFinite(v)) out[k] = String(v);
+        else if (typeof v === 'boolean') out[k] = String(v);
       }
       return out;
     }
