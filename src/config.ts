@@ -11,12 +11,22 @@ export const features = {
   /** Projects grid, driven by src/data/projects.json. */
   projects: false,
   /**
-   * The contact form posts to /api/contact, which needs a mail provider that is
-   * not yet chosen. While false, the contact section shows direct email and
-   * phone instead of a form that would silently fail.
+   * The contact form posts to /api/contact. Requires the MAIL_API_KEY secret to
+   * be set on the Worker; without it the endpoint returns 503 rather than
+   * accepting a submission it cannot deliver.
    */
-  contactForm: false,
+  contactForm: true,
 } as const;
+
+/**
+ * Turnstile site key (public — safe to ship in HTML). Null until a widget is
+ * created, in which case the form renders without a CAPTCHA and relies on the
+ * honeypot, minimum time-to-submit, and field limits.
+ *
+ * The Worker verifies Turnstile server-side only when TURNSTILE_SECRET_KEY is
+ * set, so this and that secret must be configured together.
+ */
+export const turnstileSiteKey: string | null = null;
 
 /**
  * Section order and nav membership. Nav entries are generated from this, so a

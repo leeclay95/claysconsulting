@@ -1,5 +1,5 @@
 ---
-import { features, sectionNumber, site } from '../config';
+import { features, sectionNumber, site, turnstileSiteKey } from '../config';
 
 /**
  * Contact.
@@ -60,10 +60,15 @@ import { features, sectionNumber, site } from '../config';
                   that arrive implausibly fast after render. */}
               <input type="hidden" name="rendered_at" id="rendered-at" value="" />
 
-              {/* Turnstile widget mounts here once a sitekey is configured.
-                  Verification is server-side in the Worker — a client-only
-                  check is theater. */}
-              <div class="cf-turnstile" data-sitekey="" data-theme="dark"></div>
+              {/* Rendered only when a sitekey exists — an empty data-sitekey
+                  is a dead element. Verification is server-side in the Worker;
+                  a client-only check is theater. */}
+              {turnstileSiteKey && (
+                <>
+                  <div class="cf-turnstile" data-sitekey={turnstileSiteKey} data-theme="dark"></div>
+                  <script is:inline async defer src="https://challenges.cloudflare.com/turnstile/v0/api.js"></script>
+                </>
+              )}
 
               <button class="btn btn--primary" type="submit">Send request</button>
 
@@ -107,6 +112,77 @@ import { features, sectionNumber, site } from '../config';
     </div>
   </div>
 </section>
+
+<script>
+  /**
+   * Progressive enhancement only. The form is a real <form> with a real action,
+   * so it still works with this script blocked — the Worker returns an HTML
+   * confirmation page in that case rather than raw JSON.
+   */
+  const form = document.querySelector<HTMLFormElement>('#contact-form');
+  const status = document.querySelector<HTMLParagraphElement>('#cform-status');
+  const renderedAt = document.querySelector<HTMLInputElement>('#rendered-at');
+
+  // Stamp render time so the Worker can reject implausibly fast submissions.
+  // Without JS this stays empty and the Worker skips the check rather than
+  // rejecting a legitimate no-JS submission.
+  if (renderedAt) renderedAt.value = String(Date.now());
+
+  // Map error codes to something a human can act on. Anything unlisted falls
+  // back to a generic message plus the direct email address.
+  const MESSAGES: Record<string, string> = {
+    missing_fields: 'Please complete every field.',
+    invalid_email: 'That email address does not look valid.',
+    field_too_long: 'One of the fields is too long.',
+    too_fast: 'That was submitted very quickly — please try again.',
+    missing_captcha: 'Please complete the verification challenge.',
+    captcha_failed: 'Verification failed. Please try again.',
+    payload_too_large: 'That message is too long.',
+    not_configured: 'The form is unavailable right now. Please email us directly.',
+    send_failed: 'We could not send that. Please email us directly.',
+  };
+
+  if (form && status) {
+    const button = form.querySelector<HTMLButtonElement>('button[type="submit"]');
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      status.textContent = '';
+      status.removeAttribute('data-state');
+      if (button) button.disabled = true;
+
+      const payload = Object.fromEntries(new FormData(form).entries());
+
+      try {
+        const response = await fetch(form.action, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', accept: 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const result = (await response.json()) as { ok?: boolean; error?: string };
+
+        if (result.ok) {
+          form.reset();
+          if (renderedAt) renderedAt.value = String(Date.now());
+          status.dataset.state = 'ok';
+          status.textContent = 'Thanks — your request has been sent. We will reply shortly.';
+        } else {
+          status.dataset.state = 'error';
+          status.textContent =
+            MESSAGES[result.error ?? ''] ??
+            'Something went wrong. Please email info@claysconsulting.org directly.';
+        }
+      } catch {
+        // Network failure, offline, or the request never completed.
+        status.dataset.state = 'error';
+        status.textContent =
+          'Could not reach the server. Please email info@claysconsulting.org directly.';
+      } finally {
+        if (button) button.disabled = false;
+      }
+    });
+  }
+</script>
 
 <style>
   .contact__grid {
