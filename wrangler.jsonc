@@ -11,11 +11,16 @@
   // Reachable at https://claysconsulting.<subdomain>.workers.dev until routes are
   // added for the apex domain. Worker names allow only lowercase letters,
   // digits and hyphens — no dots — so this cannot be "claysconsulting.org".
-  // Kept enabled through the cutover so the site can be compared at both
-  // hostnames. Set to false once the apex is verified: otherwise the site is
-  // reachable at a second hostname that bypasses this zone's WAF and rate
-  // limiting, and search engines see duplicate content.
-  "workers_dev": true,
+  // Disabled now that the apex is verified. A stable <name>.workers.dev
+  // hostname is a permanent second entrance that bypasses this zone's WAF and
+  // rate limiting, and it is duplicate content for search engines.
+  "workers_dev": false,
+
+  // Version preview URLs (<version>-<name>.<subdomain>.workers.dev) stay on:
+  // this is a separate setting from workers_dev, and the pull-request workflow
+  // publishes a preview version and comments its URL. These change every
+  // version rather than being a stable, guessable entrance.
+  "preview_urls": true,
 
   // Serve the apex and www from this Worker.
   //
