@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "claysconsulting-site",
+  "name": "claysconsulting",
   "main": "worker/index.ts",
   "compatibility_date": "2026-08-01",
 
@@ -8,7 +8,9 @@
   // CLOUDFLARE_ACCOUNT_ID environment variable — supplied in CI from the
   // repository secret, and exported locally when deploying by hand.
 
-  // M1: reachable at https://claysconsulting-site.<subdomain>.workers.dev
+  // Reachable at https://claysconsulting.<subdomain>.workers.dev until routes are
+  // added for the apex domain. Worker names allow only lowercase letters,
+  // digits and hyphens — no dots — so this cannot be "claysconsulting.org".
   // M2/M3 add a "routes" entry here. Deliberately NOT `custom_domain: true` —
   // that makes wrangler manage the DNS record, which would force DNS:Edit onto
   // the CI token and collapse the split in the design doc (§10).
