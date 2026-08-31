@@ -26,7 +26,7 @@ export const features = {
  * The Worker verifies Turnstile server-side only when TURNSTILE_SECRET_KEY is
  * set, so this and that secret must be configured together.
  */
-export const turnstileSiteKey: string | null = null;
+export const turnstileSiteKey: string | null = '0x4AAAAAAEi-WrM64idwMt9n';
 
 /**
  * Section order and nav membership. Nav entries are generated from this, so a
