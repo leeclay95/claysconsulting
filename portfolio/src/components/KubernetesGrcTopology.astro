@@ -66,25 +66,27 @@
     <text x="90" y="102" class="topo-arrow-label">provisions</text>
 
     <path d="M110,70 V320 H190" class="topo-arrow" marker-end="url(#arrow)" />
-    <text x="115" y="312" class="topo-arrow-label">installs controllers</text>
+    <text x="125" y="308" class="topo-arrow-label">installs controllers</text>
 
     <path d="M320,220 V350" class="topo-arrow" marker-end="url(#arrow)" />
-    <text x="325" y="280" class="topo-arrow-label">GetSecretValue via eso-role</text>
+    <text x="333" y="280" class="topo-arrow-label">GetSecretValue via eso-role</text>
 
     <path d="M320,420 V480" class="topo-arrow" marker-end="url(#arrow)" />
-    <text x="325" y="450" class="topo-arrow-label">K8s Secrets</text>
+    <text x="333" y="450" class="topo-arrow-label">K8s Secrets</text>
 
     <path d="M570,420 V480" class="topo-arrow" marker-end="url(#arrow)" />
-    <text x="575" y="450" class="topo-arrow-label">blocks at apply time</text>
+    <text x="583" y="450" class="topo-arrow-label">blocks at apply time</text>
 
-    <path d="M160,375 H710" class="topo-arrow" marker-end="url(#arrow)" />
-    <text x="300" y="365" class="topo-arrow-label">git pull</text>
+    <!-- Routed below the controllers row (y440 sits in the clear gap between
+         it and the webapp box) so this line never crosses their titles. -->
+    <path d="M160,375 V440 H700 V385 H710" class="topo-arrow" marker-end="url(#arrow)" />
+    <text x="380" y="433" class="topo-arrow-label">git pull</text>
 
     <path d="M820,420 V480" class="topo-arrow" marker-end="url(#arrow)" />
-    <text x="825" y="450" class="topo-arrow-label">sync + self-heal</text>
+    <text x="833" y="450" class="topo-arrow-label">sync + self-heal</text>
 
     <path d="M850,220 H1010 V500 H970" class="topo-arrow" marker-end="url(#arrow)" />
-    <text x="915" y="213" class="topo-arrow-label">image pull</text>
+    <text x="915" y="209" class="topo-arrow-label">image pull</text>
   </svg>
 </div>
 
