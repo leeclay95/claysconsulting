@@ -1,5 +1,25 @@
 {
-  "extends": "astro/tsconfigs/strict",
+  "$schema": "https://json.schemastore.org/tsconfig",
+  // Inlined from astro/tsconfigs/strict + base rather than using `extends`:
+  // that package-subpath extends broke `astro build` in CI (rolldown-vite's
+  // resolver failed to find it) despite working locally on an identical
+  // lockfile install. Update this by hand if astro's own strict preset changes.
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "forceConsistentCasingInFileNames": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "allowJs": true,
+    "jsx": "preserve",
+    "strict": true
+  },
   "include": [".astro/types.d.ts", "**/*"],
   "exclude": ["dist", "node_modules", ".wrangler"]
 }
