@@ -1,5 +1,27 @@
 {
-  "extends": "astro/tsconfigs/strict",
+  // Inlined from astro/tsconfigs/strict + base rather than using `extends`:
+  // that package-subpath extends breaks `astro build` under rolldown-vite
+  // whenever this project's tsconfig is resolved without this repo's own
+  // node_modules present (e.g. an isolated CI job for a subdirectory like
+  // portfolio/, which walks up and hits this file). Confirmed by reproducing
+  // it locally with node_modules/ temporarily removed. Update by hand if
+  // astro's own strict preset changes.
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "forceConsistentCasingInFileNames": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "allowJs": true,
+    "jsx": "preserve",
+    "strict": true
+  },
   "include": [".astro/types.d.ts", "**/*"],
   "exclude": [
     "dist",
@@ -7,6 +29,9 @@
     // Local prior-art reference and session scratch — gitignored, not source.
     "aws-deployment-kit",
     ".superpowers",
-    ".wrangler"
+    ".wrangler",
+    // Independent Astro project with its own tsconfig.json; without this,
+    // "**/*" below pulls its files into this site's own `astro check` too.
+    "portfolio"
   ]
 }
