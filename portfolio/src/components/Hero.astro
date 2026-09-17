@@ -1,0 +1,42 @@
+---
+import Terminal from './Terminal.astro';
+import { operator } from '../data/operator';
+---
+
+<section id="top" class="hero">
+  <div class="wrap">
+    <p class="label">{operator.name}</p>
+    <h1 class="hero__h1">{operator.title}</h1>
+    <p class="hero__sub">
+      Interactive walkthrough of my work below. Type a command, or scroll for the full page.
+    </p>
+
+    <div class="hero__terminal">
+      <Terminal />
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero {
+    padding-block: clamp(3rem, 9vw, 6rem) clamp(3rem, 9vw, 5rem);
+  }
+
+  .hero__h1 {
+    margin-top: 0.75rem;
+    font-size: clamp(1.75rem, 4.5vw, 2.75rem);
+    letter-spacing: -0.02em;
+    max-width: 34ch;
+  }
+
+  .hero__sub {
+    margin-top: 1.25rem;
+    font-size: 1.0625rem;
+    max-width: 54ch;
+  }
+
+  .hero__terminal {
+    margin-top: 2.5rem;
+    max-width: 44rem;
+  }
+</style>

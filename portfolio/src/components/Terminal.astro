@@ -1,0 +1,162 @@
+---
+import { operator, skills, certifications } from '../data/operator';
+import { projects } from '../data/projects';
+
+/**
+ * Everything the client script needs, serialized once at build time. All of
+ * it is authored content (bio, project copy), and nothing here originates from
+ * a visitor, so there is no injection surface despite the JSON blob.
+ */
+const terminalData = {
+  operator: { name: operator.name, title: operator.title, bio: operator.bio, focus: operator.focus },
+  skills,
+  certifications,
+  projects: projects.map((p) => ({
+    slug: p.slug,
+    title: p.title,
+    summary: p.summary,
+    stack: p.stack,
+    highlights: p.highlights,
+    href: p.href,
+  })),
+  contact: {
+    email: 'info@claysconsulting.org',
+    contactUrl: 'https://claysconsulting.org/#contact',
+  },
+};
+---
+
+<div class="terminal">
+  <div class="terminal__bar">
+    <span class="terminal__dot" aria-hidden="true"></span>
+    <span class="terminal__dot" aria-hidden="true"></span>
+    <span class="terminal__dot" aria-hidden="true"></span>
+    <span class="label terminal__title">lee@portfolio</span>
+  </div>
+
+  <div class="terminal__log" id="terminal-log" role="log" aria-live="polite"></div>
+
+  <form class="terminal__form" id="terminal-form">
+    <label class="terminal__prompt" for="terminal-input">lee@portfolio:~$</label>
+    <input
+      class="terminal__input"
+      id="terminal-input"
+      name="command"
+      type="text"
+      autocomplete="off"
+      autocapitalize="off"
+      spellcheck="false"
+      aria-label="Terminal command input"
+    />
+  </form>
+</div>
+
+<script type="application/json" id="terminal-data" set:html={JSON.stringify(terminalData)} />
+<script src="../scripts/terminal.ts"></script>
+
+<style>
+  .terminal {
+    background: var(--bg-raised);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    overflow: hidden;
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+  }
+
+  .terminal__bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 0.9rem;
+    background: var(--bg-deep);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .terminal__dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: var(--border-strong);
+  }
+
+  .terminal__title {
+    margin-left: 0.5rem;
+    color: var(--text-dim);
+  }
+
+  .terminal__log {
+    height: 18rem;
+    overflow-y: auto;
+    padding: 1rem 1.1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    color: var(--text-muted);
+  }
+
+  /*
+   * Everything below is :global() on purpose: terminal.ts builds these
+   * elements at runtime (they're never written in this file's template), so
+   * they never receive Astro's scoping attribute and a plain scoped selector
+   * would silently never match, leaving every line inheriting .terminal__log's
+   * base gray.
+   */
+  .terminal__log :global(.terminal__line) {
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  /* Echoed "already typed" lines: the whole thing reads as a command, in red. */
+  .terminal__log :global(.terminal__echo-prompt),
+  .terminal__log :global(.terminal__echo-command) {
+    color: var(--accent);
+  }
+
+  /* Field output (e.g. "show details"): red key, bright value, so the label
+     before the colon is easy to scan against its answer. */
+  .terminal__log :global(.terminal__field-label) {
+    color: var(--accent);
+  }
+
+  .terminal__log :global(.terminal__field-value) {
+    color: var(--text);
+  }
+
+  .terminal__log :global(a) {
+    color: var(--accent-soft);
+  }
+
+  .terminal__form {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.75rem 1.1rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .terminal__prompt {
+    color: var(--accent);
+    white-space: nowrap;
+  }
+
+  .terminal__input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font: inherit;
+    /* Real text-input caret, colored to match the prompt so it reads as
+       "your cursor" distinct from typed text, no fake blinking-block JS. */
+    caret-color: var(--accent);
+  }
+
+  .terminal__input:focus {
+    outline: none;
+  }
+
+  .terminal__input:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+  }
+</style>

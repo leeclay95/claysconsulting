@@ -1,0 +1,37 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "claysconsulting-portfolio",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-08-01",
+
+  // The account ID is deliberately NOT committed. Wrangler reads it from the
+  // CLOUDFLARE_ACCOUNT_ID environment variable, same as the main site.
+
+  // Same reasoning as the main site's wrangler.jsonc: a *.workers.dev hostname
+  // would bypass this zone's WAF/rate-limiting and duplicate content.
+  "workers_dev": false,
+  "preview_urls": false,
+
+  // Unlike the main site's apex/www routes, there is no pre-existing DNS
+  // record for "portfolio". One proxied placeholder A record must be created
+  // by hand in the Cloudflare dashboard before this route can match anything
+  // (see docs/superpowers/specs/2026-09-16-portfolio-subdomain-design.md §2.2).
+  //
+  // `zone_name` rather than `zone_id` so no account identifiers are committed.
+  // Deliberately NOT `custom_domain: true`: that would make Wrangler manage
+  // the DNS record itself, requiring DNS:Edit on the CI token.
+  "routes": [
+    { "pattern": "portfolio.claysconsulting.org/*", "zone_name": "claysconsulting.org" }
+  ],
+
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page"
+  },
+
+  "observability": {
+    "enabled": true
+  }
+}

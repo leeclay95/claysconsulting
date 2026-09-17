@@ -1,0 +1,88 @@
+---
+import { operator, skills, certifications } from '../data/operator';
+---
+
+<section id="about" class="section section--deep">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="section-head__num">01</span>
+      <h2>About</h2>
+    </div>
+
+    <p class="about__title">{operator.title}</p>
+    <p class="about__bio">{operator.bio}</p>
+
+    <div class="skills">
+      {
+        skills.map((group) => (
+          <div class="skills__group">
+            <p class="label">{group.group}</p>
+            <ul class="skills__list">
+              {group.items.map((item) => (
+                <li>{item}</li>
+              ))}
+            </ul>
+          </div>
+        ))
+      }
+
+      <div class="skills__group">
+        <p class="label">Certifications</p>
+        <ul class="skills__list skills__list--certs">
+          {certifications.map((cert) => (
+            <li>{cert}</li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .about__title {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent-soft);
+    margin-bottom: 1rem;
+  }
+
+  .about__bio {
+    max-width: var(--measure);
+    font-size: 1.0625rem;
+    color: var(--text);
+  }
+
+  .skills {
+    margin-top: 2.5rem;
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  }
+
+  .skills__list {
+    list-style: none;
+    margin: 0.75rem 0 0;
+    padding: 0;
+    display: grid;
+    gap: 0.4rem;
+    font-size: 0.9375rem;
+  }
+
+  .skills__list--certs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 0.6rem;
+  }
+
+  .skills__list--certs li {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    color: var(--text);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    padding: 0.2rem 0.5rem;
+  }
+</style>

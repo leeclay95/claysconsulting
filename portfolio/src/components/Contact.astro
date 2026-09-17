@@ -1,0 +1,25 @@
+---
+const email = 'info@claysconsulting.org';
+---
+
+<section id="contact" class="section section--deep">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="section-head__num">03</span>
+      <h2>Contact</h2>
+    </div>
+
+    <p class="contact__text">
+      For engagement inquiries, reach out through
+      <a href={`mailto:${email}`}>{email}</a>
+      or the <a href="https://claysconsulting.org/#contact" rel="noopener">contact form on claysconsulting.org</a>.
+    </p>
+  </div>
+</section>
+
+<style>
+  .contact__text {
+    max-width: var(--measure);
+    font-size: 1.0625rem;
+  }
+</style>

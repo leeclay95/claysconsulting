@@ -1,0 +1,102 @@
+---
+import { projects } from '../data/projects';
+---
+
+<section id="projects" class="section">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="section-head__num">02</span>
+      <h2>Projects</h2>
+    </div>
+
+    <div class="work">
+      {
+        projects.map((p) => (
+          <article class="work__card">
+            <header class="work__head">
+              <h3 class="work__title">{p.title}</h3>
+            </header>
+            <p class="work__summary">{p.summary}</p>
+            <ul class="work__stack">
+              {p.stack.map((s) => (
+                <li class="label">{s}</li>
+              ))}
+            </ul>
+            <ul class="work__highlights">
+              {p.highlights.map((h) => (
+                <li>{h}</li>
+              ))}
+            </ul>
+            <div class="work__links">
+              <a class="work__link label" href={`/projects/${p.slug}/`}>
+                Full write-up &rarr;
+              </a>
+              <a class="work__link work__link--secondary label" href={p.href} rel="noopener">
+                Source on GitHub
+              </a>
+            </div>
+          </article>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .work {
+    display: grid;
+    gap: 1.25rem;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+  }
+
+  .work__card {
+    background: var(--bg-raised);
+    border: 1px solid var(--border-strong);
+    border-left: 2px solid var(--accent);
+    border-radius: var(--radius);
+    padding: 1.75rem;
+    display: grid;
+    gap: 1rem;
+    align-content: start;
+  }
+
+  .work__title {
+    font-size: 1.0625rem;
+  }
+
+  .work__summary {
+    font-size: 0.9375rem;
+  }
+
+  .work__stack {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1rem;
+  }
+
+  .work__highlights {
+    margin: 0;
+    padding-left: 1.1rem;
+    display: grid;
+    gap: 0.4rem;
+    font-size: 0.875rem;
+  }
+
+  .work__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1.25rem;
+  }
+
+  .work__link {
+    color: var(--accent-soft);
+    text-decoration: none;
+  }
+
+  .work__link--secondary {
+    color: var(--text-dim);
+  }
+</style>
