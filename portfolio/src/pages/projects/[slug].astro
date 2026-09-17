@@ -1,7 +1,15 @@
 ---
 import Base from '../../layouts/Base.astro';
 import KubernetesGrcTopology from '../../components/KubernetesGrcTopology.astro';
+import IamPrivescTopology from '../../components/IamPrivescTopology.astro';
 import { projects } from '../../data/projects';
+
+/** One diagram component per project that has one. Keyed by slug rather than
+    a generic prop, since each diagram is hand-drawn for its own architecture. */
+const TOPOLOGIES: Record<string, any> = {
+  'kubernetes-grc-engineering': KubernetesGrcTopology,
+  'iam-privilege-escalation-lab': IamPrivescTopology,
+};
 
 export function getStaticPaths() {
   return projects.map((project) => ({
@@ -11,6 +19,7 @@ export function getStaticPaths() {
 }
 
 const { project } = Astro.props;
+const Topology = TOPOLOGIES[project.slug];
 ---
 
 <Base title={`${project.title} | Lee Clayton`} description={project.summary}>
@@ -32,55 +41,37 @@ const { project } = Astro.props;
       <h2 class="detail__h2">How it works</h2>
       <p class="detail__architecture">{project.detail.architecture}</p>
 
-      {project.slug === 'kubernetes-grc-engineering' && (
+      {Topology && (
         <div class="detail__diagram">
-          <KubernetesGrcTopology />
+          <Topology />
         </div>
       )}
 
-      <h2 class="detail__h2">Controls</h2>
-      <div class="table-wrap">
-        <table class="detail__table">
-          <thead>
-            <tr>
-              <th>Layer</th>
-              <th>Tool</th>
-              <th>What it enforces</th>
-            </tr>
-          </thead>
-          <tbody>
-            {project.detail.controls.map((row) => (
-              <tr>
-                <td>{row.layer}</td>
-                <td>{row.tool}</td>
-                <td>{row.enforcement}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      <h2 class="detail__h2">Ownership</h2>
-      <div class="table-wrap">
-        <table class="detail__table">
-          <thead>
-            <tr>
-              <th>Layer</th>
-              <th>Owner</th>
-              <th>Managed by</th>
-            </tr>
-          </thead>
-          <tbody>
-            {project.detail.ownership.map((row) => (
-              <tr>
-                <td>{row.layer}</td>
-                <td>{row.owner}</td>
-                <td>{row.managedBy}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {project.detail.sections.map((section) => (
+        <>
+          <h2 class="detail__h2">{section.heading}</h2>
+          {section.kind === 'text' ? (
+            <p class="detail__architecture">{section.body}</p>
+          ) : (
+            <div class="table-wrap">
+              <table class="detail__table">
+                <thead>
+                  <tr>
+                    {section.columns.map((col) => <th>{col}</th>)}
+                  </tr>
+                </thead>
+                <tbody>
+                  {section.rows.map((row) => (
+                    <tr>
+                      {row.map((cell) => <td>{cell}</td>)}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </>
+      ))}
     </div>
   </article>
 </Base>

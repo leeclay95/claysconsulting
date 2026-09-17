@@ -1,0 +1,172 @@
+---
+/**
+ * Hand-authored diagram of the IAM Privilege Escalation Lab, redrawn from
+ * ~/iam_lab/README.md for the web. Specific to this one project on purpose.
+ *
+ * Layout rule (learned the hard way on the k8s diagram): every arrow lives
+ * entirely inside its own gap row between two boxes, and every line of text
+ * lives entirely inside its own box. No arrow ever crosses a box's vertical
+ * span, so it can never cut through a label.
+ */
+---
+
+<div class="topology">
+  <svg viewBox="0 0 1040 1360" role="img" aria-label="Diagram: an attacker is denied direct S3 and SSM access, pivots through an overpermissive Lambda execution role to exfiltrate secrets, escalates further through an unscoped iam:PassRole to deploy a second attacker-controlled Lambda, then a GRC layer of OPA and tfsec catches both misconfigurations pre-deploy and the fixed Terraform blocks the same attack.">
+    <defs>
+      <marker id="arrow2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z" class="topo-arrowhead" />
+      </marker>
+    </defs>
+
+    <rect x="170" y="20" width="600" height="60" rx="4" class="topo-box" />
+    <text x="470" y="55" class="topo-box-title" text-anchor="middle">Attacker: dev-contractor IAM user (low privilege)</text>
+
+    <rect x="790" y="150" width="230" height="100" rx="4" class="topo-box" />
+    <text x="905" y="178" class="topo-box-title" text-anchor="middle">Direct Access Attempt</text>
+    <text x="905" y="200" class="topo-box-sub" text-anchor="middle">Targets: S3 vault,</text>
+    <text x="905" y="216" class="topo-box-sub" text-anchor="middle">SSM parameters</text>
+    <text x="905" y="236" class="topo-box-sub" text-anchor="middle">Result: DENIED (namespace isolation)</text>
+
+    <rect x="170" y="130" width="600" height="70" rx="4" class="topo-box" />
+    <text x="470" y="158" class="topo-box-title" text-anchor="middle">Lambda Pivot</text>
+    <text x="470" y="180" class="topo-box-sub" text-anchor="middle">Attacker invokes the data-processor Lambda function</text>
+
+    <rect x="170" y="240" width="600" height="70" rx="4" class="topo-box topo-box--crimson-outline" />
+    <text x="470" y="266" class="topo-box-title" text-anchor="middle">Misconfiguration: lambda_exec role</text>
+    <text x="470" y="288" class="topo-box-sub" text-anchor="middle">s3:*, ssm:GetParameter* granted on Resource: *</text>
+
+    <rect x="170" y="350" width="600" height="80" rx="4" class="topo-box topo-box--crimson-fill" />
+    <text x="470" y="376" class="topo-box-title topo-box-title--fill" text-anchor="middle">BREACH: vault + SSM secrets exfiltrated</text>
+    <text x="470" y="396" class="topo-box-sub topo-box-sub--fill" text-anchor="middle">db-creds.txt, api-keys, employee PII, SSM SecureStrings</text>
+    <text x="470" y="416" class="topo-box-sub topo-box-sub--fill" text-anchor="middle">ALLOWED (should have been denied)</text>
+
+    <rect x="170" y="470" width="600" height="70" rx="4" class="topo-box" />
+    <text x="470" y="496" class="topo-box-title" text-anchor="middle">Escalation: attacker uses devops-role</text>
+    <text x="470" y="518" class="topo-box-sub" text-anchor="middle">Role grants broad IAM permissions including iam:PassRole</text>
+
+    <rect x="170" y="580" width="600" height="70" rx="4" class="topo-box topo-box--crimson-outline" />
+    <text x="470" y="606" class="topo-box-title" text-anchor="middle">Misconfiguration: unscoped PassRole</text>
+    <text x="470" y="628" class="topo-box-sub" text-anchor="middle">iam:PassRole on Resource: * with no iam:PassedToService condition</text>
+
+    <rect x="170" y="690" width="600" height="70" rx="4" class="topo-box" />
+    <text x="470" y="716" class="topo-box-title" text-anchor="middle">Attacker deploys evil-exfil Lambda</text>
+    <text x="470" y="738" class="topo-box-sub" text-anchor="middle">PassRole attaches the same overpermissive lambda_exec role to it</text>
+
+    <rect x="170" y="800" width="600" height="70" rx="4" class="topo-box topo-box--crimson-fill" />
+    <text x="470" y="826" class="topo-box-title topo-box-title--fill" text-anchor="middle">BREACH: additional PII exfiltrated</text>
+    <text x="470" y="848" class="topo-box-sub topo-box-sub--fill" text-anchor="middle">via the attacker-controlled Lambda inheriting the exec role</text>
+
+    <rect x="170" y="880" width="600" height="40" rx="4" class="topo-box topo-box--amber-fill" />
+    <text x="470" y="905" class="topo-box-title topo-box-title--on-amber" text-anchor="middle">GRC ENGINEERING REMEDIATION</text>
+
+    <rect x="170" y="930" width="600" height="110" rx="4" class="topo-box topo-box--amber-outline" />
+    <text x="470" y="958" class="topo-box-title" text-anchor="middle">GRC Layer: OPA Rego + tfsec + conftest</text>
+    <text x="470" y="980" class="topo-box-sub" text-anchor="middle">Scans the terraform/ plan before any deploy</text>
+    <text x="470" y="1002" class="topo-box-sub" text-anchor="middle">Flags: IAM-001, IAM-002, IAM-003, IAM-004, LAMBDA-001</text>
+
+    <rect x="170" y="1080" width="600" height="110" rx="4" class="topo-box topo-box--amber-outline" />
+    <text x="470" y="1106" class="topo-box-title" text-anchor="middle">Remediation: terraform-fix/</text>
+    <text x="470" y="1128" class="topo-box-sub" text-anchor="middle">S3 access scoped to a specific prefix</text>
+    <text x="470" y="1148" class="topo-box-sub" text-anchor="middle">PassRole scoped, plus a required iam:PassedToService condition</text>
+    <text x="470" y="1168" class="topo-box-sub" text-anchor="middle">Lambda invoke restricted to the allowed account principal</text>
+
+    <rect x="170" y="1230" width="600" height="90" rx="4" class="topo-box topo-box--amber-fill" />
+    <text x="470" y="1258" class="topo-box-title topo-box-title--on-amber" text-anchor="middle">FIXED: same attack scripts re-run, both blocked</text>
+    <text x="470" y="1280" class="topo-box-sub topo-box-sub--on-amber" text-anchor="middle">Lambda pivot denied, PassRole escalation blocked</text>
+    <text x="470" y="1300" class="topo-box-sub topo-box-sub--on-amber" text-anchor="middle">GRC scan returns clean (0 findings)</text>
+
+    <path d="M770,50 H900 V150" class="topo-arrow" marker-end="url(#arrow2)" />
+    <path d="M470,80 V130" class="topo-arrow" marker-end="url(#arrow2)" />
+    <path d="M470,200 V240" class="topo-arrow" marker-end="url(#arrow2)" />
+    <path d="M470,310 V350" class="topo-arrow" marker-end="url(#arrow2)" />
+    <path d="M470,430 V470" class="topo-arrow" marker-end="url(#arrow2)" />
+    <path d="M470,540 V580" class="topo-arrow" marker-end="url(#arrow2)" />
+    <path d="M470,650 V690" class="topo-arrow" marker-end="url(#arrow2)" />
+    <path d="M470,760 V800" class="topo-arrow" marker-end="url(#arrow2)" />
+    <path d="M470,870 V880" class="topo-arrow" marker-end="url(#arrow2)" />
+    <path d="M470,920 V930" class="topo-arrow" marker-end="url(#arrow2)" />
+    <path d="M470,1040 V1080" class="topo-arrow" marker-end="url(#arrow2)" />
+    <path d="M470,1190 V1230" class="topo-arrow" marker-end="url(#arrow2)" />
+  </svg>
+</div>
+
+<style>
+  .topology {
+    overflow-x: auto;
+    background: var(--bg-raised);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    padding: 1rem;
+  }
+
+  .topology svg {
+    display: block;
+    width: 100%;
+    min-width: 44rem;
+    height: auto;
+    font-family: var(--font-mono);
+  }
+
+  .topo-box {
+    fill: var(--bg-deep);
+    stroke: var(--border-strong);
+    stroke-width: 1.5;
+  }
+
+  /* Misconfiguration description: crimson outline, base fill (cause, not yet effect). */
+  .topo-box--crimson-outline {
+    stroke: var(--accent);
+    stroke-width: 2;
+  }
+
+  /* Breach outcome: crimson fill (the attack succeeded). */
+  .topo-box--crimson-fill {
+    fill: var(--accent);
+    stroke: var(--accent);
+  }
+
+  /* GRC layer: amber, matching the site's compliance/severity semantic. */
+  .topo-box--amber-outline {
+    stroke: var(--warning);
+    stroke-width: 2;
+  }
+
+  .topo-box--amber-fill {
+    fill: var(--warning);
+    stroke: var(--warning);
+  }
+
+  .topo-box-title {
+    fill: var(--text);
+    font-size: 13px;
+  }
+
+  .topo-box-sub {
+    fill: var(--text-muted);
+    font-size: 10.5px;
+  }
+
+  .topo-box-title--fill {
+    fill: #fff;
+  }
+
+  .topo-box-sub--fill {
+    fill: #fff;
+    opacity: 0.9;
+  }
+
+  .topo-box-title--on-amber,
+  .topo-box-sub--on-amber {
+    fill: var(--bg);
+  }
+
+  .topo-arrow {
+    fill: none;
+    stroke: var(--accent-soft);
+    stroke-width: 1.5;
+  }
+
+  .topo-arrowhead {
+    fill: var(--accent-soft);
+  }
+</style>
