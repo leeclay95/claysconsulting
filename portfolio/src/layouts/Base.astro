@@ -40,12 +40,12 @@ const navItems = [
 
     <header class="hdr">
       <div class="wrap hdr__inner">
-        <a class="hdr__mark" href="#top">
+        <a class="hdr__mark" href="/#top">
           <span class="hdr__mark-name">Lee Clayton</span>
         </a>
 
         <nav class="hdr__nav" aria-label="Sections">
-          {navItems.map((s) => <a href={`#${s.id}`}>{s.label}</a>)}
+          {navItems.map((s) => <a href={`/#${s.id}`}>{s.label}</a>)}
         </nav>
 
         <a class="hdr__cta" href="https://claysconsulting.org" rel="noopener">claysconsulting.org</a>
