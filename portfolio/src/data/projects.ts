@@ -141,4 +141,82 @@ export const projects: Project[] = [
       ],
     },
   },
+  {
+    slug: 'azure-grc-evidence-pipeline',
+    title: 'Azure GRC Evidence Pipeline',
+    summary:
+      'A GRC engineering pipeline built in Terraform on Azure that discovers what is configured, enables only what is missing, collects Defender for Cloud assessments into an evidence store it owns, and produces a POA&M and SAR that read only from that store. Built as the CGE-AZ capstone, which passed. Identity is managed identities inside Azure and OIDC in CI, so no credential is stored anywhere, and every control is mapped to NIST SP 800-53 Rev. 5 and CSF 2.0.',
+    stack: [
+      'Terraform',
+      'Azure Policy',
+      'Microsoft Defender for Cloud',
+      'Cosmos DB',
+      'Blob Storage (WORM)',
+      'Azure Functions',
+      'Managed Identities',
+      'GitHub Actions (OIDC)',
+      'OPA / Rego',
+      'conftest',
+      'checkov',
+      'tflint',
+      'gitleaks',
+      'KQL',
+    ],
+    highlights: [
+      'Zero stored credentials: managed identities inside Azure and OIDC federation in CI, with gitleaks clean across the full history',
+      'Discovery first: each Defender plan is read before anything is enabled, so activation changes only what is missing',
+      'Collect once: a scheduled sweep of 101 assessments feeds every framework through a data-driven crosswalk that maps 41 assessments to NIST 800-53 Rev. 5 and CSF 2.0',
+      'Reports read only from the evidence store: a POA&M listing 55 open findings matched the 55 stored documents for its run, in write-once storage that refuses deletes',
+      'A CI gate of OPA rules blocks insecure Terraform at pull request time, and drift detection opens and closes its own GitHub issues',
+    ],
+    href: 'https://github.com/leeclay95/cgeaz',
+    detail: {
+      architecture:
+        'Five Terraform root modules, each with its own remote state, build the pipeline: foundation (management groups, Azure Policy, one remediation identity, logging), activation (Defender plans, enabled only where discovery found them off), evidence store (Cosmos DB, a write-once Blob container, and the collector Function), reporting (the report Function), and enforcement (a modify policy behind an audit, dry-run, and enforce ladder). Stages read each other only through outputs. The collector runs on a schedule as its own managed identity, reads Defender assessments, and writes one document per assessment, resource, and run to Cosmos, followed by a ledger entry for the run. The reporter runs as a different identity that can read Cosmos and write Blob but cannot reach Defender, so every figure in a POA&M or SAR traces to a stored document. Reports are named after the run they were cut from and written once to a container with a 90 day WORM policy. Pull requests pass a conftest gate before merge, and a scheduled Terraform plan opens a GitHub issue when reality drifts from the code.',
+      sections: [
+        {
+          kind: 'table',
+          heading: 'Controls',
+          columns: ['Layer', 'Component', 'What it enforces'],
+          rows: [
+            ['Policy', 'Azure Policy initiative', 'Audit for new controls, Deny where earned, DeployIfNotExists for logging, plus a custom Audit policy for shared key access'],
+            ['Identity', 'Managed identities and OIDC', 'No stored credentials anywhere; CI federates to Azure with a subject bound to the repository'],
+            ['Separation of duties', 'Collector, reporter, and remediation identities', 'The identity that writes evidence cannot author reports, and neither can remediate'],
+            ['Least privilege', 'Remediation identity', 'Two whitelisted roles at one scope; Owner and Contributor grants are blocked in code'],
+            ['Evidence integrity', 'WORM Blob container', 'Reports are immutable for 90 days; a delete is refused for every identity'],
+            ['Traceability', 'Run ledger and per-run documents', 'Every report figure reproduces from the documents of the run it names'],
+            ['IaC gate', 'conftest, checkov, tflint, gitleaks', 'Insecure Terraform cannot merge; the gate rules carry NIST 800-53 tags'],
+            ['Change control', 'Escalation ladder', 'Moving remediation from dry-run to enforce is a reviewed one line change'],
+            ['Detection', 'Drift detection and activity-log tripwire', 'Plan drift opens a GitHub issue that closes when clean; out-of-band changes send an alert'],
+          ],
+        },
+        {
+          kind: 'table',
+          heading: 'Identities',
+          columns: ['Identity', 'Can', 'Cannot'],
+          rows: [
+            ['Collector Function', 'Read Defender assessments, write Cosmos', 'Write blobs, so it cannot author reports'],
+            ['Reporter Function', 'Read Cosmos, write the reports container', 'Read Defender or write evidence'],
+            ['Remediation identity', 'Two whitelisted roles at one management group scope', 'Act at subscription scope or hold Owner or Contributor'],
+          ],
+        },
+        {
+          kind: 'table',
+          heading: 'Findings From Testing',
+          columns: ['Finding', 'Cause', 'Fix'],
+          rows: [
+            ['A report stopped tracing to data after the next sweep', 'Document IDs ignored the run, so each sweep overwrote the last', 'IDs now include the run, and a ledger entry is written per sweep'],
+            ['The drift issue never closed', 'CI planned as its own identity and replaced the deployer role assignments on every run', 'The deployer object ID is pinned as a variable in CI'],
+            ['The identity gate rule never fired', 'A plan renders an absent block as an empty list, which Rego treats as present', 'The rule counts identity entries, with pass and fail examples that prove it fires'],
+            ['An initiative update was rejected', 'Azure generated the same reference ID for two policies', 'Every policy reference has an explicit ID'],
+          ],
+        },
+        {
+          kind: 'text',
+          heading: 'Scope',
+          body: 'This build covers discovery, activation, the evidence store, reporting, and enforcement. The AI narrative stage of the course architecture is not part of it.',
+        },
+      ],
+    },
+  },
 ];

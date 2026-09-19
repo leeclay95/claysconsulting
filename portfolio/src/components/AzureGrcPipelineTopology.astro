@@ -1,0 +1,141 @@
+---
+/**
+ * Hand-authored diagram of the Azure GRC Evidence Pipeline, drawn from the
+ * architecture in ~/az-grc-engineering/cgeaz for the web. Specific to this one
+ * project on purpose.
+ *
+ * Same layout rule as the other diagrams: every arrow lives entirely inside its
+ * own gap row between two boxes, and every line of text lives entirely inside
+ * its own box, so no arrow can cut through a label. Color is semantic: neutral
+ * for architecture, amber for compliance and change control.
+ */
+---
+
+<div class="topology">
+  <svg viewBox="0 0 1040 1040" role="img" aria-label="Diagram: a GitHub Actions compliance gate guards five staged Terraform modules. Discovery reads Defender plans and activation enables only what is missing. A scheduled collector Function writes assessments and a run ledger to a Cosmos DB evidence store that also holds a crosswalk to NIST 800-53 and CSF 2.0. A separate reporter Function reads only that store and writes run-named reports to a write-once Blob container. Enforcement and detection sit alongside as change control.">
+    <defs>
+      <marker id="arrow3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z" class="topo-arrowhead" />
+      </marker>
+    </defs>
+
+    <rect x="170" y="20" width="600" height="70" rx="4" class="topo-box topo-box--amber-outline" />
+    <text x="470" y="46" class="topo-box-title" text-anchor="middle">GitHub Actions compliance gate</text>
+    <text x="470" y="66" class="topo-box-sub" text-anchor="middle">conftest gate rules, checkov, tflint and gitleaks on every pull request</text>
+    <text x="470" y="82" class="topo-box-sub" text-anchor="middle">Federated identity (OIDC): no stored credentials</text>
+
+    <rect x="170" y="130" width="600" height="70" rx="4" class="topo-box" />
+    <text x="470" y="156" class="topo-box-title" text-anchor="middle">Staged Terraform root modules</text>
+    <text x="470" y="176" class="topo-box-sub" text-anchor="middle">01 foundation, 02 activation, 03 evidence store, 04 reporting, 06 enforcement</text>
+    <text x="470" y="192" class="topo-box-sub" text-anchor="middle">Separate state per stage, composed through outputs only</text>
+
+    <rect x="170" y="240" width="600" height="70" rx="4" class="topo-box" />
+    <text x="470" y="266" class="topo-box-title" text-anchor="middle">Discovery, then activation</text>
+    <text x="470" y="286" class="topo-box-sub" text-anchor="middle">Discovery reads each Defender plan's tier and emits a gap map</text>
+    <text x="470" y="302" class="topo-box-sub" text-anchor="middle">Activation enables only what the gap map lists</text>
+
+    <rect x="170" y="350" width="600" height="80" rx="4" class="topo-box" />
+    <text x="470" y="376" class="topo-box-title" text-anchor="middle">Collector Function: scheduled, managed identity</text>
+    <text x="470" y="398" class="topo-box-sub" text-anchor="middle">Security Reader and Cosmos write only, no keys</text>
+    <text x="470" y="414" class="topo-box-sub" text-anchor="middle">Reads the Defender for Cloud assessments API</text>
+
+    <rect x="170" y="470" width="600" height="100" rx="4" class="topo-box" />
+    <text x="470" y="496" class="topo-box-title" text-anchor="middle">Cosmos DB evidence store</text>
+    <text x="470" y="518" class="topo-box-sub" text-anchor="middle">assessments: one document per assessment, resource and run</text>
+    <text x="470" y="534" class="topo-box-sub" text-anchor="middle">runs: a ledger with one entry per sweep</text>
+    <text x="470" y="550" class="topo-box-sub" text-anchor="middle">mappings: crosswalk to NIST 800-53 Rev. 5 and CSF 2.0</text>
+
+    <rect x="170" y="610" width="600" height="80" rx="4" class="topo-box" />
+    <text x="470" y="636" class="topo-box-title" text-anchor="middle">Reporter Function: scheduled, separate identity</text>
+    <text x="470" y="658" class="topo-box-sub" text-anchor="middle">Cosmos read and Blob write only, no Defender access</text>
+    <text x="470" y="674" class="topo-box-sub" text-anchor="middle">Reads the evidence store only, never a live API</text>
+
+    <rect x="170" y="730" width="600" height="80" rx="4" class="topo-box topo-box--amber-fill" />
+    <text x="470" y="756" class="topo-box-title topo-box-title--on-amber" text-anchor="middle">Blob container: WORM, 90 day retention</text>
+    <text x="470" y="778" class="topo-box-sub topo-box-sub--on-amber" text-anchor="middle">POA&amp;M (xlsx, json) and SAR, each named after its run</text>
+    <text x="470" y="794" class="topo-box-sub topo-box-sub--on-amber" text-anchor="middle">Delete refused for every identity</text>
+
+    <rect x="170" y="850" width="600" height="40" rx="4" class="topo-box topo-box--amber-fill" />
+    <text x="470" y="875" class="topo-box-title topo-box-title--on-amber" text-anchor="middle">ENFORCEMENT AND CHANGE CONTROL</text>
+
+    <rect x="170" y="900" width="290" height="110" rx="4" class="topo-box topo-box--amber-outline" />
+    <text x="315" y="928" class="topo-box-title" text-anchor="middle">Enforcement</text>
+    <text x="315" y="950" class="topo-box-sub" text-anchor="middle">Azure Policy: Audit, Deny, Modify, DINE</text>
+    <text x="315" y="968" class="topo-box-sub" text-anchor="middle">One identity, two whitelisted roles</text>
+    <text x="315" y="986" class="topo-box-sub" text-anchor="middle">audit, dry-run, enforce via reviewed PR</text>
+
+    <rect x="480" y="900" width="290" height="110" rx="4" class="topo-box topo-box--amber-outline" />
+    <text x="625" y="928" class="topo-box-title" text-anchor="middle">Detection</text>
+    <text x="625" y="950" class="topo-box-sub" text-anchor="middle">drift-detection opens and closes issues</text>
+    <text x="625" y="968" class="topo-box-sub" text-anchor="middle">Activity-log tripwire emails on changes</text>
+    <text x="625" y="986" class="topo-box-sub" text-anchor="middle">Run ledger shows the timer history</text>
+
+    <path d="M470,90 V130" class="topo-arrow" marker-end="url(#arrow3)" />
+    <path d="M470,200 V240" class="topo-arrow" marker-end="url(#arrow3)" />
+    <path d="M470,310 V350" class="topo-arrow" marker-end="url(#arrow3)" />
+    <path d="M470,430 V470" class="topo-arrow" marker-end="url(#arrow3)" />
+    <path d="M470,570 V610" class="topo-arrow" marker-end="url(#arrow3)" />
+    <path d="M470,690 V730" class="topo-arrow" marker-end="url(#arrow3)" />
+    <path d="M470,890 V900" class="topo-arrow" marker-end="url(#arrow3)" />
+  </svg>
+</div>
+
+<style>
+  .topology {
+    overflow-x: auto;
+    background: var(--bg-raised);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    padding: 1rem;
+  }
+
+  .topology svg {
+    display: block;
+    width: 100%;
+    min-width: 44rem;
+    height: auto;
+    font-family: var(--font-mono);
+  }
+
+  .topo-box {
+    fill: var(--bg-deep);
+    stroke: var(--border-strong);
+    stroke-width: 1.5;
+  }
+
+  /* Compliance and change control: amber, matching the site's semantic. */
+  .topo-box--amber-outline {
+    stroke: var(--warning);
+    stroke-width: 2;
+  }
+
+  .topo-box--amber-fill {
+    fill: var(--warning);
+    stroke: var(--warning);
+  }
+
+  .topo-box-title {
+    fill: var(--text);
+    font-size: 13px;
+  }
+
+  .topo-box-sub {
+    fill: var(--text-muted);
+    font-size: 10.5px;
+  }
+
+  .topo-box-title--on-amber,
+  .topo-box-sub--on-amber {
+    fill: var(--bg);
+  }
+
+  .topo-arrow {
+    fill: none;
+    stroke: var(--accent-soft);
+    stroke-width: 1.5;
+  }
+
+  .topo-arrowhead {
+    fill: var(--accent-soft);
+  }
+</style>

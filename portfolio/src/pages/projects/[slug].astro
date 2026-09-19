@@ -2,6 +2,7 @@
 import Base from '../../layouts/Base.astro';
 import KubernetesGrcTopology from '../../components/KubernetesGrcTopology.astro';
 import IamPrivescTopology from '../../components/IamPrivescTopology.astro';
+import AzureGrcPipelineTopology from '../../components/AzureGrcPipelineTopology.astro';
 import { projects } from '../../data/projects';
 
 /** One diagram component per project that has one. Keyed by slug rather than
@@ -9,6 +10,7 @@ import { projects } from '../../data/projects';
 const TOPOLOGIES: Record<string, any> = {
   'kubernetes-grc-engineering': KubernetesGrcTopology,
   'iam-privilege-escalation-lab': IamPrivescTopology,
+  'azure-grc-evidence-pipeline': AzureGrcPipelineTopology,
 };
 
 export function getStaticPaths() {
